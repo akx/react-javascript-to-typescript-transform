@@ -22,6 +22,8 @@ program
     .option('--trailing-comma <none|es5|all>', 'Print trailing commas wherever possible when multi-line.', 'none')
     .option('--use-tabs', 'Indent with tabs instead of spaces.', false)
     .option('--ignore-prettier-errors', 'Ignore (but warn about) errors in Prettier', false)
+    .option('--keep-original-files', 'Keep original files', false)
+    .option('--keep-temporary-files', 'Keep temporary files', false)
     .usage('[options] <filename or glob>')
     .command('* <glob>')
     .action(globPattern => {
@@ -52,11 +54,17 @@ program
                 fs.copyFileSync(filePath, temporaryPath);
                 const result = run(temporaryPath, prettierOptions, compilationOptions);
                 fs.writeFileSync(newPath, result);
-                fs.unlinkSync(filePath);
-                fs.unlinkSync(temporaryPath);
+                if (!program.keepOriginalFiles) {
+                    fs.unlinkSync(filePath);
+                }
             } catch (error) {
                 console.warn(`Failed to convert ${file}`);
                 console.warn(error);
+            }
+            if (!program.keepTemporaryFiles) {
+                if (fs.existsSync(temporaryPath)) {
+                    fs.unlinkSync(temporaryPath);
+                }
             }
         }
     });
