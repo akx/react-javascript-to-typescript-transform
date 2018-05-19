@@ -42,11 +42,13 @@ program
         for (const file of files) {
             const filePath = path.resolve(file);
             const newPath = filePath.replace(/\.jsx?$/, '.tsx');
-
+            const temporaryPath = filePath.replace(/\.jsx?$/, `_js2ts_${+new Date()}.tsx`);
             try {
-                fs.renameSync(filePath, newPath);
-                const result = run(newPath, prettierOptions);
+                fs.copyFileSync(filePath, temporaryPath);
+                const result = run(temporaryPath, prettierOptions);
                 fs.writeFileSync(newPath, result);
+                fs.unlinkSync(filePath);
+                fs.unlinkSync(temporaryPath);
             } catch (error) {
                 console.warn(`Failed to convert ${file}`);
                 console.warn(error);
