@@ -7,6 +7,7 @@ import * as path from 'path';
 import * as prettier from 'prettier';
 
 import { run } from '.';
+import { CompilationOptions } from './compiler';
 
 program
     .version('1.0.0')
@@ -20,6 +21,7 @@ program
     .option('--tab-width <int>', 'Number of spaces per indentation level.', 2)
     .option('--trailing-comma <none|es5|all>', 'Print trailing commas wherever possible when multi-line.', 'none')
     .option('--use-tabs', 'Indent with tabs instead of spaces.', false)
+    .option('--ignore-prettier-errors', 'Ignore (but warn about) errors in Prettier', false)
     .usage('[options] <filename or glob>')
     .command('* <glob>')
     .action(globPattern => {
@@ -38,6 +40,9 @@ program
             trailingComma: program.trailingComma,
             useTabs: !!program.useTabs,
         };
+        const compilationOptions: CompilationOptions = {
+            ignorePrettierErrors: !!program.ignorePrettierErrors,
+        };
         const files = glob.sync(globPattern, {});
         for (const file of files) {
             const filePath = path.resolve(file);
@@ -45,7 +50,7 @@ program
             const temporaryPath = filePath.replace(/\.jsx?$/, `_js2ts_${+new Date()}.tsx`);
             try {
                 fs.copyFileSync(filePath, temporaryPath);
-                const result = run(temporaryPath, prettierOptions);
+                const result = run(temporaryPath, prettierOptions, compilationOptions);
                 fs.writeFileSync(newPath, result);
                 fs.unlinkSync(filePath);
                 fs.unlinkSync(temporaryPath);
