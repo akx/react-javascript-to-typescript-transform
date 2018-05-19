@@ -15,7 +15,7 @@ import { TransformFactoryFactory } from '.';
 export function compile(
     filePath: string,
     factoryFactories: TransformFactoryFactory[],
-    incomingPrettierOptions: prettier.Options = {},
+    incomingPrettierOptions: prettier.Options = {}
 ) {
     const compilerOptions: ts.CompilerOptions = {
         target: ts.ScriptTarget.ES2017,
@@ -56,7 +56,7 @@ export function compile(
     const inputSource = fs.readFileSync(filePath, 'utf-8');
     const prettierOptions = getPrettierOptions(filePath, inputSource, incomingPrettierOptions);
 
-    return prettier.format(printed, incomingPrettierOptions);
+    return prettier.format(printed, prettierOptions);
 }
 
 /**
@@ -76,7 +76,7 @@ export function getPrettierOptions(filePath: string, source: string, options: pr
     const semi = getUseOfSemi(source);
     const quotations = getQuotation(source);
 
-    _.defaults(options, {
+    _.defaults(Object.assign({}, options), {
         tabWidth: indentAmount,
         useTabs: indentType && indentType === 'tab',
         printWidth: sourceWidth,

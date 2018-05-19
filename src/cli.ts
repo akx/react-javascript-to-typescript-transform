@@ -26,6 +26,18 @@ program
         if (!globPattern) {
             throw new Error('You must provide a file name or glob pattern to transform');
         }
+        const prettierOptions: prettier.Options = {
+            arrowParens: program.arrowParens,
+            bracketSpacing: !program.noBracketSpacing,
+            jsxBracketSameLine: !!program.jsxBracketSameLine,
+            printWidth: parseInt(program.printWidth, 10),
+            proseWrap: program.proseWrap,
+            semi: !program.noSemi,
+            singleQuote: !!program.singleQuote,
+            tabWidth: parseInt(program.tabWidth, 10),
+            trailingComma: program.trailingComma,
+            useTabs: !!program.useTabs,
+        };
         const files = glob.sync(globPattern, {});
         for (const file of files) {
             const filePath = path.resolve(file);
@@ -33,18 +45,6 @@ program
 
             try {
                 fs.renameSync(filePath, newPath);
-                const prettierOptions: prettier.Options = {
-                    arrowParens: program.arrowParens,
-                    bracketSpacing: !program.noBracketSpacing,
-                    jsxBracketSameLine: !!program.jsxBracketSameLine,
-                    printWidth: parseInt(program.printWidth, 10),
-                    proseWrap: program.proseWrap,
-                    semi: !program.noSemi,
-                    singleQuote: !!program.singleQuote,
-                    tabWidth: parseInt(program.tabWidth, 10),
-                    trailingComma: program.trailingComma,
-                    useTabs: !!program.useTabs,
-                };
                 const result = run(newPath, prettierOptions);
                 fs.writeFileSync(newPath, result);
             } catch (error) {
