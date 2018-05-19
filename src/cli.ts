@@ -9,6 +9,27 @@ import * as prettier from 'prettier';
 import { run } from '.';
 import { CompilationOptions } from './compiler';
 
+function resolveGlobs(globPatterns: string[]): string[] {
+    const files: string[] = [];
+    function addFile(file: string) {
+        file = path.resolve(file);
+        if (files.indexOf(file) === -1) {
+            files.push(file);
+        }
+    }
+    globPatterns.forEach(pattern => {
+        if (/[{}*?+\[\]]/.test(pattern)) {
+            // Smells like globs
+            glob.sync(pattern, {}).forEach(file => {
+                addFile(file);
+            });
+        } else {
+            addFile(pattern);
+        }
+    });
+    return files;
+}
+
 program
     .version('1.0.0')
     .option('--arrow-parens <avoid|always>', 'Include parentheses around a sole arrow function parameter.', 'avoid')
@@ -25,11 +46,8 @@ program
     .option('--keep-original-files', 'Keep original files', false)
     .option('--keep-temporary-files', 'Keep temporary files', false)
     .usage('[options] <filename or glob>')
-    .command('* <glob>')
-    .action(globPattern => {
-        if (!globPattern) {
-            throw new Error('You must provide a file name or glob pattern to transform');
-        }
+    .command('* [glob/filename...]')
+    .action((globPatterns: string[]) => {
         const prettierOptions: prettier.Options = {
             arrowParens: program.arrowParens,
             bracketSpacing: !program.noBracketSpacing,
@@ -45,10 +63,12 @@ program
         const compilationOptions: CompilationOptions = {
             ignorePrettierErrors: !!program.ignorePrettierErrors,
         };
-        const files = glob.sync(globPattern, {});
+        const files = resolveGlobs(globPatterns);
+        if (!files.length) {
+            throw new Error('Nothing to do. You must provide file names or glob patterns to transform.');
+        }
         let errors = false;
-        for (const file of files) {
-            const filePath = path.resolve(file);
+        for (const filePath of files) {
             const newPath = filePath.replace(/\.jsx?$/, '.tsx');
             const temporaryPath = filePath.replace(/\.jsx?$/, `_js2ts_${+new Date()}.tsx`);
             try {
@@ -59,7 +79,7 @@ program
                     fs.unlinkSync(filePath);
                 }
             } catch (error) {
-                console.warn(`Failed to convert ${file}`);
+                console.warn(`Failed to convert ${filePath}`);
                 console.warn(error);
                 errors = true;
             }
