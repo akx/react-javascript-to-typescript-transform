@@ -69,6 +69,7 @@ program
         }
         let errors = false;
         for (const filePath of files) {
+            console.log(`Transforming ${filePath}...`);
             const newPath = filePath.replace(/\.jsx?$/, '.tsx');
             const temporaryPath = filePath.replace(/\.jsx?$/, `_js2ts_${+new Date()}.tsx`);
             try {
