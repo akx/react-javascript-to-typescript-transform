@@ -46,6 +46,7 @@ program
             ignorePrettierErrors: !!program.ignorePrettierErrors,
         };
         const files = glob.sync(globPattern, {});
+        let errors = false;
         for (const file of files) {
             const filePath = path.resolve(file);
             const newPath = filePath.replace(/\.jsx?$/, '.tsx');
@@ -60,12 +61,16 @@ program
             } catch (error) {
                 console.warn(`Failed to convert ${file}`);
                 console.warn(error);
+                errors = true;
             }
             if (!program.keepTemporaryFiles) {
                 if (fs.existsSync(temporaryPath)) {
                     fs.unlinkSync(temporaryPath);
                 }
             }
+        }
+        if (errors) {
+            process.exit(1);
         }
     });
 
